@@ -1,0 +1,59 @@
+import drake
+import drake.cxx
+
+libs = None
+include_path = None
+
+def configure(cxx_config = drake.cxx.Config(),
+              cxx_toolkit = drake.cxx.Toolkit(),
+              prefix = drake.Path('/usr')):
+
+  global include_path
+  global libs
+
+  #
+  # Config.
+  #
+  prefix = drake.Path(prefix)
+  cxx_config.flag('-std=c++11')
+  include_path = drake.Path('include')
+  cxx_config.add_local_include_path(include_path)
+
+  #
+  # Rules.
+  #
+  rule_lib = drake.Rule('lib')
+  rule_install = drake.Rule('install')
+
+  #
+  # Sources.
+  #
+  sources = drake.nodes(
+    'include/fmt/format-inl.h',
+    'include/fmt/posix.h',
+    'include/fmt/ostream.h',
+    'include/fmt/ranges.h',
+    'include/fmt/format.h',
+    'include/fmt/core.h',
+    'include/fmt/printf.h',
+    'include/fmt/time.h',
+    'src/format.cc',
+    'src/posix.cc',
+  )
+
+  #
+  # Libraries.
+  #
+  lib = drake.cxx.DynLib(
+    'lib/fmt',
+    sources,
+    cxx_toolkit,
+    cxx_config)
+  rule_lib << lib
+  libs = [lib]
+
+  #
+  # Install.
+  #
+  rule_install << drake.copy([f for f in sources if isinstance(f, drake.cxx.Header)], prefix)
+  rule_install << drake.copy(libs, prefix)
